@@ -39,7 +39,7 @@ def inserirProcesso(processoProcurado):
         bdServer_cursor.close()
         sql_server_cnx.commit()
     
-    print("Insert: PID:",processoProcurado['pid'],"Titulo:",processoProcurado['titulo'])
+    #print("Insert: PID:",processoProcurado['pid'],"Titulo:",processoProcurado['titulo'])
 def deletarProcesso(processoProcurado):
     #QUERY SQL
     query = (
@@ -58,7 +58,7 @@ def deletarProcesso(processoProcurado):
         bdServer_cursor.close()
         sql_server_cnx.commit()
     
-    print("Delete: PID:",processoProcurado['pid'],"Titulo:",processoProcurado['titulo'])
+    #print("Delete: PID:",processoProcurado['pid'],"Titulo:",processoProcurado['titulo'])
 def obter_pids_titulos_janelas_visiveis():
     # Obtém todas as janelas usando pygetwindow
     janelas = gw.getAllTitles()
@@ -118,6 +118,6 @@ if __name__ == "__main__":
         obterDadosGrafico(quantidade_processos, uso_cpu, uso_ram)
         time.sleep(5)
         #print(listaAtual)
-        print("")
-        print("Next:")
-        print("")
+        #print("")
+        #print("Next:")
+        #print("")
