@@ -34,6 +34,9 @@ object Cmd {
                     deletarPID(pid);
                 }
             }
+            jdbcTemplate.execute(
+                "DELETE FROM Processo WHERE status = 0 AND fkMaqProc = $idMaquina;"
+            )
         } catch (excecao:Exception){
 
         }

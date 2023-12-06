@@ -140,7 +140,7 @@ object Python {
         return nomeArquivoPy
     }
     fun executarScript(arquivo:String) {
-        val pythonProcess:Process = Runtime.getRuntime().exec("py $arquivo")
+        val pythonProcess:Process = Runtime.getRuntime().exec("python3 $arquivo")
         pythonProcesses = pythonProcess
     }
     fun pararScript() {

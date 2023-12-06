@@ -90,7 +90,7 @@ class Monitoramento {
             //val monitorarProcessos:Boolean = repositorioComponentes.verificarComponenteProcesso(maquina.idMaquina);
 
             val horaLogin = LocalDateTime.now();
-            //repositorioUsuario.registrarEntrada(usuario, maquina, horaLogin);
+            repositorioUsuario.registrarEntrada(usuario, maquina, horaLogin);
 
             /* FIM BUSCA DE DADOS, COMPONENTES E SESSÃO */
 
@@ -113,14 +113,14 @@ class Monitoramento {
                         println("\r\nTrocando de usuário...\r\n");
                         Python.pararScript();
                         val horaLogout = LocalDateTime.now();
-                        //repositorioUsuario.registrarSaida(usuario, maquina, horaLogout);
+                        repositorioUsuario.registrarSaida(usuario, maquina, horaLogout);
                         monitoramento = false;
                     }
                     2 -> {
                         println("\r\nEncerrando o programa...\r\n");
                         Python.pararScript();
                         val horaLogout = LocalDateTime.now();
-                        //repositorioUsuario.registrarSaida(usuario, maquina, horaLogout);
+                        repositorioUsuario.registrarSaida(usuario, maquina, horaLogout);
                         repositorioComponentes.limparProcessos(maquina.idMaquina);
                         monitoramento = false;
                         exitProcess(0);
