@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Engenheiro de NOC</title>
+  <link rel="icon" href="../assets/icon/favicon.ico">
+  <link rel="stylesheet" href="../css/dash_visoes.css">
+  <link rel="stylesheet" href="../css/barra_lateral.css">
+  <script src="../js/nivelAcesso.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="../js/dashboard_indi_Paola.js"></script>
+</head>
+
+<body>
+  <div class="container_principal">
+    <div class="barra_lateral" id="lateral_barra"></div>
+    <div class="area_dash">
+      <div class="dash_superior">
+        <div class="bem_vindo">
+          <span class="text_bemVindo1">
+            Veja visões diferentes para os dados
+          </span>
+        </div>
+      </div>
+      <div class="div_central">
+        <div class="div_conteudo">
+          <div class="menu_visoes">
+            <a href="../dashboard/dashboard_desem.html">
+              <div class="botao_visoes">
+                Dados Gerais
+              </div>
+            </a>
+            <a href="../dashboard/dashboard_relatorio.html">
+              <div class="botao_visoes">
+                Gerar Relatório
+              </div>
+            </a>
+            <a href="../dashboard/dashRuan.html">
+              <div class="botao_visoes">
+                Calculadora de Recursos
+              </div>
+            </a>
+            <a href="../dashboard/processos.html">
+              <div class="botao_visoes">
+                Entenda os Processos
+              </div>
+            </a>
+            <a href="../dashboard/dash_EtiquetIA.html">
+              <div class="botao_visoes">
+                EtiqueIA
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+</body>
+
+</html>
+
+<script>
+
+window.onload = async function () {
+    await listarLateral();
+  };
+
+</script>

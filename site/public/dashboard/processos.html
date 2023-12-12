@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Processos</title>
+    <link rel="icon" href="../assets/icon/favicon.ico">
+    <link rel="stylesheet" href="../css/dash_visoes.css">
+    <link rel="stylesheet" href="../css/barra_lateral.css">
+    <script src="../js/nivelAcesso.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="../css/dash_processos.css">
+    <!-- <script src="../js/dashboard_processos.js"></script> -->
+    <script src="../js/andar.js"></script>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+        integrity="sha384-GLhlTQ8iK16HMI9z0i7WHPsGJ8a9PeHdH2g+iEzPn1qOG2Emv8OrCgqE2KZfEbah" crossorigin="anonymous">
+</head>
+
+<body onload="listarLateral(),buscarAndares()">
+    <div class="container_principal">
+        <div id="divRelatorio" class="div-relatorio">
+            <div class="div-relatorio-conteudo">
+                <div>
+                    <span class="titulo-relatorio">Computadores:</span>
+                    <span class="close" onclick="gerarRelatorio()">&times;</span>
+                </div>
+                <div id="listaComputadoresFiltro"></div>
+                <div>
+                    <button class="style-fltro cursor" onclick="SelecionarTodos()">Selecionar Todos</button>
+                    <button class="style-fltro cursor vermelho" onclick="buscarDadosGrafico()">Concluído</button>
+                </div>
+            </div>
+        </div>
+        <div class="barra_lateral" id="lateral_barra"></div>
+        <div class="area_dash">
+            <div class="dash_superior">
+                <div class="bem_vindo">
+                    <span class="text_bemVindo1">
+                        Analisar Processos
+                    </span>
+                </div>
+            </div>
+            <div class="div_central">
+                <div class="div_conteudo">
+                    <div class="div_individual" id="div_individual">
+                        <div class="div_superior">
+                            <div class="div-esquerda">
+                                <div class="divPesquisa">
+                                    <input type="text" placeholder="Insira o id da maquina..." class="style-fltro"
+                                        id="inputPesquisa" />
+                                    <div>
+                                        <label class="branco" for="filtro">Separar por Andar:</label>
+                                        <input type="checkbox" class="chk-filtro" name="filtro" id="chkFiltro" />
+                                    </div>
+                                    <select name="andares" class="style-fltro" id="andares"></select>
+                                    <button class="btn-reload" onclick="listarProcessos()">
+                                        <svg class="rotate-arrow cursor" width="15" height="15" viewBox="0 0 212 213"
+                                            fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path id="Vector" stroke="white"
+                                                d="M6.62305 93.5C9.7841 69.3843 21.6258 47.2472 39.9315 31.2328C58.2372 15.2183 81.752 6.4244 106.074 6.49712C130.396 6.56985 153.858 15.5043 172.067 31.6279C190.277 47.7515 201.986 69.959 205.003 94.0932C208.019 118.227 202.137 142.634 188.457 162.744C174.776 182.854 154.236 197.288 130.68 203.346C107.124 209.403 82.1685 206.668 60.484 195.652C38.7995 184.637 21.873 166.096 12.873 143.5M6.62305 206V143.5H69.1231"
+                                                stroke="black" stroke-width="11.495" stroke-linecap="round"
+                                                stroke-linejoin="round" />
+                                        </svg>
+                                    </button>
+                                    <button class="style-fltro cursor" onclick="gerarRelatorio()">Gerar
+                                        gráfico</button>
+                                </div>
+                                <div id="listaComputadores" class="lista-computadores"></div>
+                            </div>
+                            <div class="div-direita">
+                                <div class="divProcessosDiferentes">
+                                    <div>
+                                        <span id="tituloProcessosDiferentes" class="branco">Processos Diferentes</span>
+                                    </div>
+                                    <div id="listaProcessosDiferentes"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="div_inferior">
+                            <div class="grafico">
+                                <span class="texto-grafico">Gráfico Quantidade de Processos x Computador x Cpu x
+                                    Ram</span>
+                                <canvas id="grafico1"></canvas>
+                            </div>
+                            <div class="grafico">
+                                <span class="texto-grafico">Total de Processos x Processos com janelas visíveis</span>
+                                <canvas id="grafico2"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
+<script>
+    function toggleInfo(id, seta) {
+    var conteudoInfo = document.getElementById(id);
+    if (conteudoInfo.style.display === 'none') {
+        conteudoInfo.style.display = 'block';
+        document.getElementById(seta).innerHTML = '&#9650;';  // Seta para cima
+    } else {
+        conteudoInfo.style.display = 'none';
+        document.getElementById(seta).innerHTML = '&#9660;';  // Seta para baixo
+    }
+}
+var count = [];
+async function listarProcessos(pesquisa) {
+    var idEmpresa = sessionStorage.Empresa;
+    var idAndar = (andares.value).split('-')[1];
+    var filtro = chkFiltro.checked;
+    count = [];
+    if (idAndar == 0 || idAndar == undefined) idAndar = null;
+    try {
+        var resposta = await fetch("/processos/listarProcessos", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                idEmpresaServer: idEmpresa,
+                idAndarServer: idAndar,
+                filtroServer: filtro,
+                pesquisaServer: pesquisa
+            })
+        });
+        if (resposta.ok) {
+            var respostaJson = await resposta.json();
+            console.log('JSON PROCESSOS: ', respostaJson);
+
+            for (let b = 0; b < 2; b++) {
+                if (b == 0) {
+                    var listaComputadores = document.getElementById('listaComputadores');
+                } else {
+                    var listaComputadores = document.getElementById('listaComputadoresFiltro');
+                }
+                listaComputadores.innerHTML = "";
+                var arrayIdComputador = [];
+                var arrayDadoCabecalho = [];
+                
+                var tituloProcessosDiferentes = [];
+                var dadosProcessosDiferentes = [];
+                
+                for (let i = 0; i < respostaJson.length; i++) {
+                    if (arrayIdComputador.indexOf(respostaJson[i].idMaquina) == -1) {
+                        arrayIdComputador.push(respostaJson[i].idMaquina);
+                        var vetor = [];
+                        vetor.push(respostaJson[i].Id_do_dispositivo);
+                        vetor.push(respostaJson[i].email);
+                        arrayDadoCabecalho.push(vetor);
+                    }                    
+                }
+                if (b == 0) {
+                    arrayIdComputador.forEach(i => {
+                        var divComputador = document.createElement('div');
+                        divComputador.className = 'computador';
+                        
+                        var divCabecalho = document.createElement('div');
+                        var spanComputador = document.createElement('span');
+                        var spanPessoa = document.createElement('span');
+                        var spanSeta = document.createElement('span');
+                        spanSeta.id = `seta1-${i}`;
+                        divCabecalho.className = 'cabecalho';
+                        divCabecalho.id = `computador-${i}`;
+                        divCabecalho.addEventListener('click', function () {
+                            var idMaquina = (this.id).split('-')[1];
+                            toggleInfo(`conteudoInfoProcessos-${idMaquina}`, `seta1-${idMaquina}`);
+                        });
+                        var posicao = arrayIdComputador.indexOf(i);
+                        spanComputador.innerHTML = arrayDadoCabecalho[posicao][0];
+                        spanPessoa.innerHTML = '';
+                        spanSeta.innerHTML = "&#9660;";
+                        
+                        var divConteudo = document.createElement('div');
+                        var divDeletar = document.createElement('div');
+                        var buttonDeletar = document.createElement('button');
+                        
+                        divConteudo.className = "conteudo";
+                        divConteudo.id = `conteudoInfoProcessos-${i}`;
+                        var contador = 0;
+                        respostaJson.forEach(a => {
+                            if (a.fkMaqProc == i) {
+                                var divCheckBox = document.createElement('div');
+                                var checkBoxProcesso = document.createElement('input');
+                                var labelProcesso = document.createElement('label');
+                                
+                                checkBoxProcesso.type = "checkbox";
+                                checkBoxProcesso.name = `chk-${a.idMaquina}`;
+                                checkBoxProcesso.id = `chk-${a.idProcesso}`;
+                                labelProcesso.innerHTML = a.titulo;
+                                labelProcesso.for = `chk-${a.idMaquina}`;
+                                
+                                divCheckBox.appendChild(checkBoxProcesso);
+                                divCheckBox.appendChild(labelProcesso);
+                                divConteudo.appendChild(divCheckBox);
+                            
+                                if (tituloProcessosDiferentes.indexOf(a.titulo) == -1) {
+                                    tituloProcessosDiferentes.push(a.titulo);
+                                    var array = [arrayDadoCabecalho[posicao][0], arrayDadoCabecalho[posicao][1]];
+                                    dadosProcessosDiferentes.push(array);
+                                }
+                                contador++;
+                            }
+                        });
+                        count.push(contador);
+                        divDeletar.className = "div-btn-deletar";
+                        buttonDeletar.className = "btn-deletar cursor";
+                        buttonDeletar.innerHTML = "Deletar Processos";
+                        buttonDeletar.name = `btn-${i}`
+                    
+                        buttonDeletar.addEventListener('click', function () {
+                            var idMaquina = (this.name).split('-')[1];
+                            deletarProcessos(idMaquina);
+                        });
+                        
+                        divCabecalho.appendChild(spanComputador);
+                        divCabecalho.appendChild(spanPessoa);
+                        divCabecalho.appendChild(spanSeta);
+                        
+                        divDeletar.appendChild(buttonDeletar);
+                        divConteudo.appendChild(divDeletar);
+                        
+                        divComputador.appendChild(divCabecalho);
+                        divComputador.appendChild(divConteudo);
+                    
+                        listaComputadores.appendChild(divComputador);
+                    });
+                    processosDiferentes(tituloProcessosDiferentes, dadosProcessosDiferentes);
+                } else {
+                    arrayIdComputador.forEach(i => {
+                        var posicao = arrayIdComputador.indexOf(i);
+
+                        var divCheckBox = document.createElement('div');
+                        var checkbox = document.createElement('input');
+                        var label = document.createElement('label');
+                        
+                        checkbox.type = "checkbox";
+                        checkbox.name = `chkRelatorio`;
+                        checkbox.id = `chkRelatorio-${i}`;
+                        label.innerHTML = arrayDadoCabecalho[posicao][0];
+                        label.for = `chkRelatorio-${i}`;
+                        
+                        divCheckBox.appendChild(checkbox);
+                        divCheckBox.appendChild(label);
+
+                        listaComputadores.appendChild(divCheckBox);
+                    });
+                }
+            }
+
+        }
+    } catch (erro) {
+        console.log("Erro Processos: ", erro);
+    }
+}
+function processosDiferentes(titulos, dados) {
+    var listaProcessosDiferentes = document.getElementById('listaProcessosDiferentes');
+    listaProcessosDiferentes.innerHTML = '';
+    for (let i = 0; i < titulos.length; i++) {
+        var divComputador = document.createElement('div');
+        divComputador.className = "computador preto";
+
+        var divCabecalho = document.createElement('div');
+        var spanTitulo = document.createElement('span');
+        var spanSeta = document.createElement('span');
+        spanSeta.id = `seta2-${i}`
+        spanTitulo.innerHTML = titulos[i];
+        spanSeta.innerHTML = "&#9660;";
+        
+        divCabecalho.className = 'cabecalho';
+        divCabecalho.id = `processoDiferente-${i}`;
+        divCabecalho.addEventListener('click', function () {
+            var idTitulo = (this.id).split('-')[1];
+            toggleInfo(`conteudoInfoProcessosDiferentes-${idTitulo}`, `seta2-${idTitulo}`);
+        });
+
+        divCabecalho.appendChild(spanTitulo);
+        divCabecalho.appendChild(spanSeta);
+
+        var divConteudo = document.createElement('div');
+        divConteudo.className = "conteudo";
+        divConteudo.id = `conteudoInfoProcessosDiferentes-${i}`;
+
+        var divInfo = document.createElement('div');
+        var spanComputador = document.createElement('span');
+        // var spanPessoa = document.createElement('span');
+        spanComputador.innerHTML = dados[i][0];
+        // spanPessoa.innerHTML = dados[i][1];
+
+        divInfo.appendChild(spanComputador);
+        // divInfo.appendChild(spanPessoa);
+
+        var divCopia = document.createElement('div');
+        divCopia.className = 'div-copia';
+        var divBalao = document.createElement('div');
+        divBalao.classList.add('balao');
+        divBalao.classList.add('hidden');
+        divBalao.innerHTML = `id copiado: ${dados[i][0]}`;
+        divBalao.id = `${dados[i][0]}-${i}`;
+        var spanCopia = document.createElement('span');
+        spanCopia.innerHTML = "Copiar id do computador &nbsp;&nbsp;&nbsp;";
+        var iIcone = document.createElement('i');
+        iIcone.className = "material-icons cursor";
+        iIcone.innerHTML = "content_copy";
+        iIcone.name = `${dados[i][0]}-${i}`;
+        iIcone.addEventListener('click', function () {
+            var Id_do_dispositivo = (this.name).split('-')[0];
+            navigator.clipboard.writeText(Id_do_dispositivo);
+            
+            var idBalao = (this.name).split('-')[1];
+            var balao = document.getElementById(`${Id_do_dispositivo}-${idBalao}`);
+            balao.classList.remove('hidden');
+            balao.style.opacity = 1;
+            setTimeout(function() {
+                balao.style.opacity = 0;
+                balao.classList.add('hidden');
+            }, 3000);
+        });
+
+        var linha = document.createElement('div');
+        linha.className = 'linha';
+
+        divCopia.appendChild(spanCopia);
+        divCopia.appendChild(iIcone);
+        
+        divConteudo.appendChild(divBalao);
+        divConteudo.appendChild(divInfo);
+        divConteudo.appendChild(linha);
+        divConteudo.appendChild(divCopia);
+
+        divComputador.appendChild(divCabecalho);
+        divComputador.appendChild(divConteudo);
+
+        listaProcessosDiferentes.appendChild(divComputador);
+    }
+}
+async function deletarProcessos(idMaquina) {
+    var chks = document.getElementsByName(`chk-${idMaquina}`);
+    var processosParaDeletar = [];
+    for (let i = 0; i < chks.length; i++) {
+        if (chks[i].checked == true) {
+            processosParaDeletar.push((chks[i].id).split('-')[1]);
+        }
+    }
+    try {
+        var resposta = await fetch("/processos/deletarProcessos", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                processosParaDeletarServer: processosParaDeletar
+            })
+        });
+        if (resposta.ok) {
+            var respostaJson = await resposta.json();
+            console.log('JSON: ', respostaJson);
+        }
+    } catch (erro) {
+        console.log("Erro: ", erro);
+    }
+}
+function gerarRelatorio() {
+    var modal = document.getElementById('divRelatorio');
+    if (modal.style.display === 'none' || modal.style.display === '') {
+        modal.style.display = 'block';
+    } else {
+        modal.style.display = 'none';
+    }
+}
+window.onclick = function(event) {
+    var modal = document.getElementById('divRelatorio');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+function SelecionarTodos() {
+    var chks = document.getElementsByName('chkRelatorio');
+    chks.forEach(i => {
+        var checkbox = document.getElementById(i.id);
+        checkbox.checked = true;
+    });
+}
+setTimeout(() => {
+    listarProcessos();
+    var andares = document.getElementById('andares');
+    andares.addEventListener("change", function () {
+        listarProcessos();
+    });
+    var filtro = document.getElementById('chkFiltro');
+    filtro.addEventListener("change", function () {
+        listarProcessos();
+    });
+    var input = document.getElementById('inputPesquisa');
+    input.addEventListener("input", function () {
+        var input = document.getElementById('inputPesquisa');
+        var pesquisa = input.value;
+        listarProcessos(pesquisa);
+    });
+}, 1000);
+
+    const chart1 = new Chart('grafico1', {
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Quantidade de Processos',
+                data: [],
+                type: 'bar',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }, {
+                label: 'CPU',
+                data: [],
+                type: 'line',
+                fill: false,
+                borderColor: '#8565C9',
+                backgroundColor: '#8565C9',
+                borderWidth: 2
+            }, {
+                label: 'RAM',
+                data: [],
+                type: 'line',
+                fill: false,
+                borderColor: 'rgb(60, 0, 255)',
+                backgroundColor: 'rgb(60, 0, 255)',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    const chart2 = new Chart('grafico2', {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Quantidade de Processos Total',
+                data: [],
+                backgroundColor: '#6a29f8',
+                borderColor: '#6a29f8',
+                borderWidth: 1
+            }, {
+                label: 'Quantidade de Processos Visíveis',
+                data: [],
+                fill: false,
+                backgroundColor: '#5732a6',
+                borderColor: '#5732a6',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    var idComputador = [];
+    var idMaquina = [];
+    var qtdProcessos = [];
+    var vetorCpu = [];
+    var vetorRam = [];
+    async function buscarDadosGrafico() {
+        var chks = document.getElementsByName('chkRelatorio');
+        var vetorCheckbox = [];
+        chks.forEach(i => {
+            var idCheckbox = (i.id).split('-')[1];
+            var checkbox = document.getElementById(`chkRelatorio-${idCheckbox}`);
+            if (checkbox.checked == true) {
+                vetorCheckbox.push(idCheckbox);
+            }
+        });
+        try {
+            var resposta = await fetch("/processos/buscarDadosGrafico", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    vetorCheckboxServer: vetorCheckbox
+                })
+            });
+            if (resposta.ok) {
+                idComputador = [];
+                idMaquina = [];
+                qtdProcessos = [];
+                vetorCpu = [];
+                vetorRam = [];
+                var respostaJson = await resposta.json();
+                console.log('JSON buscarDadosGrafico: ', respostaJson);
+                respostaJson.forEach(i => {
+                    idComputador.push(i.Id_do_dispositivo);
+                    idMaquina.push(i.idMaquina);
+                    qtdProcessos.push(i.qtdProcessos);
+                    vetorCpu.push(i.cpu);
+                    vetorRam.push(i.ram);
+                });
+                buscarCountProcesso(vetorCheckbox);
+            }
+        } catch (erro) {
+            console.log("Erro: ", erro);
+        }
+    }
+    var countProcessos = [];
+    async function buscarCountProcesso(vetorCheckbox) {
+        try {
+            var resposta = await fetch("/processos/buscarCountProcesso", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    vetorCheckboxServer: vetorCheckbox
+                })
+            });
+            if (resposta.ok) {
+                countProcessos = [];
+                var respostaJson = await resposta.json();
+                console.log('JSON buscarCountProcesso: ', respostaJson);
+                respostaJson.forEach(i => {
+                    countProcessos.push(i.count)
+                });
+                atualizarDadosGrafico(vetorCheckbox);
+            }
+        } catch (erro) {
+            console.log("Erro: ", erro);
+        }
+    }
+    function atualizarDadosGrafico(vetorCheckbox) {
+        chart1.data.labels = idComputador;
+        const datasets = chart1.data.datasets;
+        datasets[0].data = qtdProcessos;
+        datasets[1].data = vetorCpu;
+        datasets[2].data = vetorRam;
+        chart1.update();
+
+        chart2.data.labels = idComputador;
+        const datasets2 = chart2.data.datasets;
+        datasets2[0].data = qtdProcessos;
+        // var count = sessionStorage.count.split(',')
+        datasets2[1].data = countProcessos;
+        chart2.update();
+    }
+</script>
